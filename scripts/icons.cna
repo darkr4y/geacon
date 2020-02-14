@@ -1,0 +1,32 @@
+ # -+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
+ #
+ # icon is from  http://www.veryicon.com/icons/file-type/holographic/communicator.html
+ #   (license: free for non-commercial use)
+ #
+ # Built by @darkr4y
+ #
+ # -+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+-
+
+on beacon_initial {
+    println("Hello World! I am " + $1);
+    @beacons = beacons();
+    foreach %beacon (@beacons) {
+           $curId = %beacon["id"];
+           $hostname = %beacon["computer"];
+           if ($curId eq $id) {
+                $linuxLast = indexOf($hostname, "(Linux)");
+                 if ( $linuxLast > 0 ) {
+                     %beacon["os"] = "Linux"
+                     #push($1, script_resource("linux.png"));
+                 }
+
+                 $darwinLast = indexOf($hostname, "(Darwin)");
+                 if ( $darwinLast > 0 ){
+                     %beacon["os"] = "Macosx"
+                     #push($1, script_resource("macosx.png"));
+                 }
+
+
+           }
+    }
+}
