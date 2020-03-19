@@ -17,9 +17,23 @@
 5. Having fun ! PR and issue is welcome ;)
 6. Geacon has just been tested on CobaltStrike 3.14 and only support default c2profile, so many hardcode in the project and I will not try to implement more C2profile support at this moment.
 
+## Screenshot
+
+Grab Geacon's command execution results in Linux
+![login](https://github.com/darkr4y/geacon/raw/master/screenshots/sc.png)
+
 
 
 ## Protocol analysis
 
 To be continued, I will update as soon as I have time ...
+
+
+
+## Todo
+
+1. Support CobaltStrike 4.0
+2. Fix the OS icon issue in session table
+
+*_DarkRay@RedCore*
 
