@@ -16,6 +16,7 @@
 4. Compile geacon for what platform you want to run, use command `export GOOS="darwin" && export GOARCH="amd64" && go build cmd/main.go`
 5. Having fun ! PR and issue is welcome ;)
 6. Geacon has just been tested on CobaltStrike 3.14 and only support default c2profile, so many hardcode in the project and I will not try to implement more C2profile support at this moment.
+7. Thanks for **[@xxxxxyyyy](https://github.com/xxxxxyyyy)**'s PR, and now Geacon support **CobaltStrike 4.x** 
 
 ## Screenshot
 
@@ -32,7 +33,8 @@ To be continued, I will update as soon as I have time ...
 
 ## Todo
 
-1. Support CobaltStrike 4.0
+~~1. Support CobaltStrike 4.0~~
+
 2. Fix the OS icon issue in session table
 
 *_DarkRay@RedCore*
