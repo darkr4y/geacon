@@ -20,14 +20,35 @@ func GeaconID() int {
 
 func GetProcessName() string {
 	processName := os.Args[0]
-	if len(processName) > 10 {
-		processName = processName[len(processName)-9:]
+	// C:\Users\admin\Desktop\cmd.exe
+	// ./cmd
+	slashPos := strings.LastIndex(processName, "\\")
+	if slashPos > 0 {
+		return processName[slashPos+1:]
 	}
-	return strings.ReplaceAll(strings.ReplaceAll(processName, "./", ""), "/", "")
+	backslashPos := strings.LastIndex(processName, "/")
+	if backslashPos > 0 {
+		return processName[backslashPos+1:]
+	}
+	return "unknown"
 }
 
 func GetPID() int {
 	return os.Getpid()
+}
+
+func GetMetaDataFlag() int {
+	flagInt := 0
+	if IsHighPriv() {
+		flagInt += 8
+	} else if IsOSX64() {
+		flagInt += 4
+	} else if IsProcessX64() {
+		flagInt += 2
+	} else {
+		flagInt += 1
+	}
+	return flagInt
 }
 
 func GetComputerName() string {
@@ -44,19 +65,22 @@ func GetComputerName() string {
 	return sHostName
 }
 
-func GetLocalIP() string {
+func GetLocalIPInt() uint32 {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return ""
+		return 0
 	}
 	for _, address := range addrs {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
+				if len(ipnet.IP) == 16 {
+					return binary.LittleEndian.Uint32(ipnet.IP[12:16])
+				}
+				return binary.LittleEndian.Uint32(ipnet.IP)
 			}
 		}
 	}
-	return ""
+	return 0
 }
 
 func GetMagicHead() []byte {

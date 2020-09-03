@@ -6,6 +6,7 @@ import (
 	"syscall"
 	"unsafe"
 )
+
 var (
 	Kernel32 = syscall.NewLazyDLL("Kernel32.dll")
 	//Advapi32 = syscall.NewLazyDLL("Advapi32.dll")
@@ -46,28 +47,28 @@ const (
 	ProcessorTypeAMDX8664     ProcessorType = 8664
 )
 
-func GetOSVersion() string{
+func GetOSVersion() string {
 	version, err := syscall.GetVersion()
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Printf("%d.%d (%d)\n", byte(version), uint8(version>>8), version>>16)
 
-	return fmt.Sprintf("%d.%d", byte(version), uint8(version>>8))
+	return fmt.Sprintf("%d.%d.%d\n", byte(version), uint8(version>>8), version>>16)
 }
 
 func IsHighPriv() bool {
-	token , err := syscall.OpenCurrentProcessToken()
+	token, err := syscall.OpenCurrentProcessToken()
 	defer token.Close()
 	if err != nil {
-		fmt.Printf("open current process token failed: %v\n",err)
+		fmt.Printf("open current process token failed: %v\n", err)
 		return false
 	}
 	/*
-	ref:
-	C version https://vimalshekar.github.io/codesamples/Checking-If-Admin
-	Go package https://github.com/golang/sys/blob/master/windows/security_windows.go ---> IsElevated
-	maybe future will use ---> golang/x/sys/windows
+		ref:
+		C version https://vimalshekar.github.io/codesamples/Checking-If-Admin
+		Go package https://github.com/golang/sys/blob/master/windows/security_windows.go ---> IsElevated
+		maybe future will use ---> golang/x/sys/windows
 	*/
 	var isElevated uint32
 	var outLen uint32
@@ -78,7 +79,7 @@ func IsHighPriv() bool {
 	return outLen == uint32(unsafe.Sizeof(isElevated)) && isElevated != 0
 }
 
-func IsOSX64() int {
+func IsOSX64() bool {
 	var systemInfo SystemInfo
 	fnGetNativeSystemInfo := Kernel32.NewProc("GetNativeSystemInfo")
 	if fnGetNativeSystemInfo.Find() != nil {
@@ -86,19 +87,19 @@ func IsOSX64() int {
 	}
 	fnGetNativeSystemInfo.Call(uintptr(unsafe.Pointer(&systemInfo)))
 	if (systemInfo.ProcessorArchitecture == ProcessorArchitectureAMD64 ||
-		systemInfo.ProcessorArchitecture != ProcessorArchitectureIA64 ) {
-		//64 位操作系统
+		systemInfo.ProcessorArchitecture != ProcessorArchitectureIA64) {
+		//x64
 		//fmt.Println("amd64")
-		return 1
+		return true
 	} else
 	{
-		// 32 位操作系统
+		//x86
 		//fmt.Println("386")
-		return 0
+		return false
 	}
 }
 
-func IsProcessX64() int {
+func IsProcessX64() bool {
 	fnIsWow64Process := Kernel32.NewProc("IsWow64Process")
 	//fnIsWow64Process := kernel32.FindProc("IsWow64Process")
 	if fnIsWow64Process.Find() != nil {
@@ -112,20 +113,20 @@ func IsProcessX64() int {
 		panic(err)
 	}
 
-	r1, _ , err := fnIsWow64Process.Call(uintptr(hProcess), uintptr(unsafe.Pointer(&is64)))
+	r1, _, err := fnIsWow64Process.Call(uintptr(hProcess), uintptr(unsafe.Pointer(&is64)))
 	if r1 == 0 {
 		panic(err)
 	}
-	if is64 == 1{
+	if is64 == 1 {
 		//fmt.Println("procss is x86 (value = 0)")
-		return 0
+		return false
 	} else {
 		//fmt.Println("procss is x64 (value = 1)")
-		return 1
+		return true
 	}
 }
 
-func GetUsername() string{
+func GetUsername() string {
 	username := make([]uint16, 128)
 	usernameLen := uint32(len(username)) - 1
 	err := syscall.GetUserNameEx(syscall.NameSamCompatible, &username[0], &usernameLen)
@@ -133,33 +134,30 @@ func GetUsername() string{
 		panic(err)
 	}
 	s := syscall.UTF16ToString(username)
-	if IsHighPriv() {
-		s = s + " *"
-	}
 	return s
 }
 
-func GetCodePageANSI() []byte{
+func GetCodePageANSI() []byte {
 	fnGetACP := Kernel32.NewProc("GetACP")
 	if fnGetACP.Find() != nil {
 		panic("not found GetACP")
 	}
 	acp, _, _ := fnGetACP.Call()
 	//fmt.Printf("%v\n",acp)
-	acpbytes := make([]byte,4)
+	acpbytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(acpbytes, uint32(acp))
 	return acpbytes[:2]
 
 }
 
-func GetCodePageOEM() []byte{
+func GetCodePageOEM() []byte {
 	fnGetOEMCP := Kernel32.NewProc("GetOEMCP")
 	if fnGetOEMCP.Find() != nil {
 		panic("not found GetOEMCP")
 	}
 	acp, _, _ := fnGetOEMCP.Call()
 	//fmt.Printf("%v\n",acp)
-	acpbytes := make([]byte,4)
+	acpbytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(acpbytes, uint32(acp))
 	return acpbytes[:2]
 }

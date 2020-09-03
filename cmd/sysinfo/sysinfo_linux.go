@@ -26,7 +26,7 @@ func getUname() syscall.Utsname {
 	var uname syscall.Utsname
 	if err := syscall.Uname(&uname); err != nil {
 		fmt.Printf("Uname: %v", err)
-		return syscall.Utsname{}  //nil
+		return syscall.Utsname{} //nil
 	}
 	return uname
 }
@@ -35,13 +35,13 @@ func GetOSVersion() string {
 	uname := getUname()
 
 	if len(uname.Release) > 0 {
-		return "linux-" + arrayToString(uname.Release)
+		return arrayToString(uname.Release)
 	}
-	return "linux-"
+	return "0.0"
 }
 
 func IsHighPriv() bool {
-	fd , err := os.Open("/root")
+	fd, err := os.Open("/root")
 	defer fd.Close()
 	if err != nil {
 		return false
@@ -49,32 +49,32 @@ func IsHighPriv() bool {
 	return true
 }
 
-func IsOSX64() int {
+func IsOSX64() bool {
 	uname := getUname()
 	if arrayToString(uname.Machine) == "x86_64" {
-		return 1
+		return true
 	}
-	return 0
+	return false
 }
 
-func IsProcessX64() int {
+func IsProcessX64() bool {
 	if runtime.GOARCH == "amd64" {
-		return 0
+		return false
 	}
-	return 1
+	return true
 }
 
-func GetCodePageANSI() []byte{
+func GetCodePageANSI() []byte {
 	//hardcode for test
-	b := make([]byte,2)
-	binary.BigEndian.PutUint16(b,936)
+	b := make([]byte, 2)
+	binary.BigEndian.PutUint16(b, 936)
 	return b
 }
 
-func GetCodePageOEM() []byte{
+func GetCodePageOEM() []byte {
 	//hardcode for test
-	b := make([]byte,2)
-	binary.BigEndian.PutUint16(b,936)
+	b := make([]byte, 2)
+	binary.BigEndian.PutUint16(b, 936)
 	return b
 }
 
@@ -84,8 +84,5 @@ func GetUsername() string {
 		return ""
 	}
 	usr := user.Username
-	if IsHighPriv() {
-		usr = usr + " *"
-	}
 	return usr
 }

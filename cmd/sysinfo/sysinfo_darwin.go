@@ -9,10 +9,10 @@ import (
 	"runtime"
 )
 
-func GetOSVersion() []byte {
+func GetOSVersion() string {
 	cmd := exec.Command("sw_vers", "-productVersion")
 	out, _ := cmd.CombinedOutput()
-	return out
+	return string(out[:])
 }
 
 func IsHighPriv() bool {
@@ -24,21 +24,21 @@ func IsHighPriv() bool {
 	return false
 }
 
-func IsOSX64() int {
+func IsOSX64() bool {
 	cmd := exec.Command("sysctl", "hw.cpu64bit_capable")
 	out, _ := cmd.CombinedOutput()
 	out = bytes.ReplaceAll(out, []byte("hw.cpu64bit_capable: "), []byte(""))
 	if string(out) == "1" {
-		return 1
+		return true
 	}
-	return 0
+	return false
 }
 
-func IsProcessX64() int {
+func IsProcessX64() bool {
 	if runtime.GOARCH == "amd64" {
-		return 0
+		return false
 	}
-	return 1
+	return true
 }
 
 func GetCodePageANSI() []byte {
@@ -61,8 +61,5 @@ func GetUsername() string {
 		return ""
 	}
 	usr := user.Username
-	if IsHighPriv() {
-		usr = usr + " *"
-	}
 	return usr
 }
